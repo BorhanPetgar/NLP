@@ -1,12 +1,9 @@
 from os import close, replace
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
 import matplotlib.pyplot as plt
 import seaborn as sns
 import json
-
-from sympy import closest_points
 
 
 def plot_countries_distribution(df: pd.DataFrame) -> dict:
@@ -93,6 +90,7 @@ def split_data(df: pd.DataFrame,
     y = df['nationality']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=1-train_size)
     X_val, X_test, y_val, y_test = train_test_split(X_test, y_test, test_size=test_size/(test_size+val_size))
+    return X_train, X_val, X_test, y_train, y_val, y_test
     
 if __name__ == "__main__":
     
