@@ -1,4 +1,5 @@
 from os import close, replace
+from re import X
 import pandas as pd
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
@@ -6,7 +7,7 @@ import seaborn as sns
 import json
 
 
-def plot_countries_distribution(df: pd.DataFrame) -> dict:
+def plot_countries_distribution(df: pd.DataFrame, name: str = 'train.jpg') -> dict:
     """ 
     Plot the distribution of countries in the dataset
     
@@ -26,7 +27,7 @@ def plot_countries_distribution(df: pd.DataFrame) -> dict:
     plt.figure(figsize=(25, 10))
     sns.barplot(country_dict)
     plt.xticks(rotation=90)
-    plt.savefig("countries_distribution.png")
+    plt.savefig(name)
     with open("countries.json", "w") as f:
         country_dict_alpha = {k: v for k, v in sorted(  country_dict.items(),
                                                         key=lambda item: item[0])}
@@ -88,8 +89,8 @@ def split_data(df: pd.DataFrame,
     """
     X = df['surname']
     y = df['nationality']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=1-train_size)
-    X_val, X_test, y_val, y_test = train_test_split(X_test, y_test, test_size=test_size/(test_size+val_size))
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=1-train_size, shuffle=True)
+    X_val, X_test, y_val, y_test = train_test_split(X_test, y_test, test_size=test_size/(test_size+val_size), shuffle=True)
     return X_train, X_val, X_test, y_train, y_val, y_test
     
 if __name__ == "__main__":
@@ -98,6 +99,18 @@ if __name__ == "__main__":
     # countries_dict = plot_countries_distribution(df)
     sampled_df = sample_from_countries(df, n_samples=1200, min_samples=600)
     print(sampled_df['nationality'].value_counts())
+    X_train, X_val, X_test, y_train, y_val, y_test = split_data(sampled_df)
+    print(f'Train size: {len(X_train)} Val size: {len(X_val)} Test size: {len(X_test)}')
+    # plot the train and test and validation countries distribution
+    plot_countries_distribution(sampled_df)
+    test_df = pd.DataFrame()
+    test_df['surname'] = X_test
+    test_df['nationality'] = y_test
+    plot_countries_distribution(test_df, name='test.jpg')
+    val_df = pd.DataFrame()
+    val_df['surname'] = X_val
+    val_df['nationality'] = y_val
+    plot_countries_distribution(val_df, name='val.jpg')
     
     
 
