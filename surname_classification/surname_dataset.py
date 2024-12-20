@@ -12,30 +12,51 @@ import pandas as pd
 
 
 class SurnameDataset(Dataset):
-    def __init__(self):
+    def __init__(self, split):
         df = pd.read_csv("hf://datasets/Hobson/surname-nationality/surname-nationality.csv.gz")
-        sampled_df = sample_from_countries(df, n_samples=1000)
-        X_train, X_val, X_test, y_train, y_val, y_test = split_data(sampled_df)
+        sampled_df = sample_from_countries(df, n_samples=20000, min_samples=100)
+        self.X_train, self.X_val, self.X_test, self.y_train, self.y_val, self.y_test = split_data(sampled_df)
         self.vectorizer = SurnameVectorizer.from_dataframe(sampled_df)
         self.split = {
-            'train': (X_train, y_train),
-            'val': (X_val, y_val),
-            'test': (X_test, y_test)
+            'train': (self.X_train, self.y_train),
+            'val': (self.X_val, self.y_val),
+            'test': (self.X_test, self.y_test)
         }
-        self.set_split('train')
+        self.set_split(split)
+        self.build_country_dict(sampled_df)
+        
+            
+    
+    def build_country_dict(self, df):
+        self.country_dict = {}
+        countries = df['nationality'].unique()
+        index = 0
+        for country in countries:
+            self.country_dict[country] = index
+            index += 1
+        
+        
+    def lookup_country(self, country):
+        return self.country_dict[country]
     
     def set_split(self, split):
         self.X, self.y = self.split[split]
         self.split_size = len(self.y)
     
     def __getitem__(self, index):
-
-        vectorized_surname = self.vectorizer.vectorize(self.X.iloc[index])
-        nationality = self.y.iloc[index]
+        if self.split == 'train':
+            vectorized_surname = self.vectorizer.vectorize(self.X_train.iloc[index])
+            nationality = self.y_train.iloc[index]
+        elif self.split == 'val':
+            vectorized_surname = self.vectorizer.vectorize(self.X_val.iloc[index])
+            nationality = self.y_val.iloc[index]
+        else:
+            vectorized_surname = self.vectorizer.vectorize(self.X_test.iloc[index])
+            nationality = self.y_test.iloc[index]
         return vectorized_surname, nationality
     
     def __len__(self):
-        return self.split_size
+        return len(self.vectorizer.surname_vocab)
     
 
 if __name__ == '__main__':
@@ -49,6 +70,10 @@ if __name__ == '__main__':
     for data in dataloader:
         print(data)
         break
+    
+    
+
+    
         
         
     
